@@ -11,11 +11,170 @@ days <- as.numeric(today - start_date)
 
 It has been **`r days`** days since our international nightmare began.
 
-<!-- 
+
 
 ```{shinylive-python}
 #| standalone: true
 #| viewerHeight: 600
-#| code: app.py
+from shiny import App, ui, render, reactive
+import pandas as pd
+
+# Placeholder data for comedians
+comedians_data = {
+    "Name": ["John Smith", "Jane Doe", "Bob Johnson", "Alice Williams", "Charlie Brown", "Diana Prince", "Frank Miller", "Grace Kelly"],
+    "Probability": [0.85, 0.72, 0.91, 0.68, 0.79, 0.88, 0.75, 0.82]
+}
+
+# Placeholder data for footballers
+footballers_data = {
+    "Name": ["Mike Johnson", "Sarah Connor", "Tom Brady", "Emma Watson", "David Lee", "Lisa Park", "Nick Fury", "Olivia Green"],
+    "Probability": [0.92, 0.78, 0.86, 0.71, 0.89, 0.83, 0.77, 0.94]
+}
+
+comedians_df = pd.DataFrame(comedians_data)
+footballers_df = pd.DataFrame(footballers_data)
+
+app_ui = ui.page_fluid(
+    ui.h2("Select one comedian and one footballer", style="text-align: center; margin-bottom: 20px;"),
+    ui.tags.div(
+        ui.output_text("result"),
+        style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding: 15px; background-color: #f0f0f0; border-radius: 5px;"
+    ),
+    ui.row(
+        ui.column(6,
+            ui.h4("Comedians", style="text-align: center;"),
+            ui.output_ui("comedians_list")
+        ),
+        ui.column(6,
+            ui.h4("Footballers", style="text-align: center;"),
+            ui.output_ui("footballers_list")
+        )
+    ),
+    style="padding: 20px;"
+)
+
+def server(input, output, session):
+    selected_comedian = reactive.Value(None)
+    selected_footballer = reactive.Value(None)
+    
+    @output
+    @render.ui
+    def comedians_list():
+        header = ui.tags.thead(
+            ui.tags.tr(
+                ui.tags.th("Name", style="padding: 10px; border: 1px solid #ccc;"),
+                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #ccc;")
+            )
+        )
+        
+        rows = []
+        for idx, row in comedians_df.iterrows():
+            name = row["Name"]
+            prob = row["Probability"]
+            is_selected = selected_comedian() == name
+            
+            row_style = "cursor: pointer; "
+            if is_selected:
+                row_style += "background-color: #007bff; color: white;"
+            else:
+                row_style += "background-color: #f8f9fa;"
+            
+            name_escaped = name.replace("'", "\\'")
+            rows.append(
+                ui.tags.tr(
+                    ui.tags.td(name, style="padding: 10px; border: 1px solid #ccc;"),
+                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #ccc;"),
+                    **{"onclick": f"Shiny.setInputValue('comedian_click', '{name_escaped}', {{priority: 'event'}});"},
+                    style=row_style
+                )
+            )
+        
+        table = ui.tags.table(
+            header,
+            ui.tags.tbody(*rows),
+            style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;"
+        )
+        
+        container = ui.tags.div(
+            table,
+            style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px;"
+        )
+        return container
+    
+    @reactive.Effect
+    @reactive.event(input.comedian_click)
+    def _():
+        if input.comedian_click() is not None:
+            selected_comedian.set(input.comedian_click())
+    
+    @output
+    @render.ui
+    def footballers_list():
+        header = ui.tags.thead(
+            ui.tags.tr(
+                ui.tags.th("Name", style="padding: 10px; border: 1px solid #ccc;"),
+                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #ccc;")
+            )
+        )
+        
+        rows = []
+        for idx, row in footballers_df.iterrows():
+            name = row["Name"]
+            prob = row["Probability"]
+            is_selected = selected_footballer() == name
+            
+            row_style = "cursor: pointer; "
+            if is_selected:
+                row_style += "background-color: #007bff; color: white;"
+            else:
+                row_style += "background-color: #f8f9fa;"
+            
+            name_escaped = name.replace("'", "\\'")
+            rows.append(
+                ui.tags.tr(
+                    ui.tags.td(name, style="padding: 10px; border: 1px solid #ccc;"),
+                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #ccc;"),
+                    **{"onclick": f"Shiny.setInputValue('footballer_click', '{name_escaped}', {{priority: 'event'}});"},
+                    style=row_style
+                )
+            )
+        
+        table = ui.tags.table(
+            header,
+            ui.tags.tbody(*rows),
+            style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;"
+        )
+        
+        container = ui.tags.div(
+            table,
+            style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px;"
+        )
+        return container
+    
+    @reactive.Effect
+    @reactive.event(input.footballer_click)
+    def _():
+        if input.footballer_click() is not None:
+            selected_footballer.set(input.footballer_click())
+    
+    @output
+    @render.text
+    def result():
+        comedian = selected_comedian()
+        footballer = selected_footballer()
+        
+        if comedian and footballer:
+            comedian_prob = comedians_df[comedians_df["Name"] == comedian]["Probability"].values[0]
+            footballer_prob = footballers_df[footballers_df["Name"] == footballer]["Probability"].values[0]
+            product = comedian_prob * footballer_prob
+            return f"Selected: {comedian} ({comedian_prob:.2f}) × {footballer} ({footballer_prob:.2f}) = {product:.4f}"
+        elif comedian:
+            return f"Selected comedian: {comedian}. Please select a footballer."
+        elif footballer:
+            return f"Selected footballer: {footballer}. Please select a comedian."
+        else:
+            return "Please select one comedian and one footballer."
+
+app = App(app_ui, server)
 ```
- -->
+
