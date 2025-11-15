@@ -336,6 +336,62 @@ def calculate_distance(coords):
         print(f"    Error calculating distance: {e}")
         return None
 
+def extract_gender(soup):
+    """Extract gender from pronouns used in the Wikipedia article"""
+    try:
+        # Look for pronoun patterns in the article
+        # Check first few paragraphs and infobox
+        
+        content = soup.find('div', {'id': 'mw-content-text'})
+        if not content:
+            return None
+        
+        # Get first few paragraphs (most reliable for biographical info)
+        paragraphs = content.find_all('p', limit=5)
+        
+        # Also check infobox
+        infobox = soup.find('table', class_='infobox')
+        infobox_text = ""
+        if infobox:
+            infobox_text = infobox.get_text()
+        
+        # Combine text from paragraphs and infobox
+        text_to_check = infobox_text + " " + " ".join([p.get_text() for p in paragraphs])
+        text_lower = text_to_check.lower()
+        
+        # Count pronoun occurrences
+        male_pronouns = [' he ', ' his ', ' him ', ' himself ']
+        female_pronouns = [' she ', ' her ', ' hers ', ' herself ']
+        
+        male_count = sum(text_lower.count(pronoun) for pronoun in male_pronouns)
+        female_count = sum(text_lower.count(pronoun) for pronoun in female_pronouns)
+        
+        # Also check for "he is", "she is" patterns (more reliable)
+        male_patterns = [r'\bhe\s+is\b', r'\bhis\s+\w+', r'\bhim\s+to\b']
+        female_patterns = [r'\bshe\s+is\b', r'\bher\s+\w+', r'\bher\s+to\b']
+        
+        for pattern in male_patterns:
+            if re.search(pattern, text_lower):
+                male_count += 2  # Weight these more heavily
+        
+        for pattern in female_patterns:
+            if re.search(pattern, text_lower):
+                female_count += 2  # Weight these more heavily
+        
+        # Determine gender based on pronoun usage
+        # Need a clear majority to be confident
+        if female_count > male_count and female_count >= 2:
+            return 'Female'
+        elif male_count > female_count and male_count >= 2:
+            return 'Male'
+        else:
+            # Not enough evidence or ambiguous
+            return None
+            
+    except Exception as e:
+        print(f"    Error extracting gender: {e}")
+        return None
+
 def enrich_comedian(row, geolocator_cache=None):
     """Enrich a single comedian's data"""
     name = row['Name']
@@ -372,6 +428,7 @@ def enrich_comedian(row, geolocator_cache=None):
         'DeathYear': death_year,
         'PageLength': None,
         'Age': None,
+        'Gender': None,
         'Birthplace': None,
         'BirthplaceLat': None,
         'BirthplaceLon': None,
@@ -393,12 +450,18 @@ def enrich_comedian(row, geolocator_cache=None):
     if age:
         print(f"  Age: {age}")
     
-    # Get birthplace and distance
-    print(f"  Getting birthplace...")
+    # Get birthplace, distance, and gender
+    print(f"  Getting birthplace and gender...")
     try:
         response = requests.get(url, headers=HEADERS, timeout=10)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Extract gender from pronouns
+        gender = extract_gender(soup)
+        result['Gender'] = gender
+        if gender:
+            print(f"  Gender: {gender}")
         
         birthplace = extract_birthplace(soup)
         result['Birthplace'] = birthplace
@@ -472,6 +535,7 @@ def enrich_comedians(input_file, output_file, limit=None):
     print(f"  Total comedians: {len(enriched_data)}")
     print(f"  With page length: {sum(1 for e in enriched_data if e['PageLength'] is not None)}")
     print(f"  With age: {sum(1 for e in enriched_data if e['Age'] is not None)}")
+    print(f"  With gender: {sum(1 for e in enriched_data if e['Gender'] is not None)}")
     print(f"  With birthplace: {sum(1 for e in enriched_data if e['Birthplace'] is not None)}")
     print(f"  With distance: {sum(1 for e in enriched_data if e['DistanceFromTeddington'] is not None)}")
 
