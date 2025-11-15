@@ -31,25 +31,31 @@ footballers_data = {
     "Probability": [0.92, 0.78, 0.86, 0.71, 0.89, 0.83, 0.77, 0.94]
 }
 
-comedians_df = pd.DataFrame(comedians_data)
-footballers_df = pd.DataFrame(footballers_data)
+comedians_df = pd.DataFrame(comedians_data).sort_values("Probability", ascending=False).reset_index(drop=True)
+footballers_df = pd.DataFrame(footballers_data).sort_values("Probability", ascending=False).reset_index(drop=True)
 
 app_ui = ui.page_fluid(
+    ui.tags.style("""
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&display=swap');
+        * {
+            font-family: 'Instrument Serif', serif !important;
+        }
+    """),
     ui.tags.div(
         ui.output_text("result"),
-        style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding: 15px; background-color: #f0f0f0; border-radius: 5px;"
+        style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding: 15px; background-color: rgba(255, 248, 240, 0.8); border-radius: 5px; border: 2px solid #8B4513;"
     ),
     ui.row(
         ui.column(6,
-            ui.h4("Comedians", style="text-align: center;"),
+            ui.h4("Comedians", style="text-align: center; font-family: 'Instrument Serif', serif;"),
             ui.output_ui("comedians_list")
         ),
         ui.column(6,
-            ui.h4("Footballers", style="text-align: center;"),
+            ui.h4("Footballers", style="text-align: center; font-family: 'Instrument Serif', serif;"),
             ui.output_ui("footballers_list")
         )
     ),
-    style="padding: 20px;"
+    style="padding: 20px; background-color: #f5e5ba; font-family: 'Instrument Serif', serif;"
 )
 
 def server(input, output, session):
@@ -61,8 +67,8 @@ def server(input, output, session):
     def comedians_list():
         header = ui.tags.thead(
             ui.tags.tr(
-                ui.tags.th("Name", style="padding: 10px; border: 1px solid #ccc;"),
-                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #ccc;")
+                ui.tags.th("Name", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);"),
+                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);")
             )
         )
         
@@ -72,17 +78,17 @@ def server(input, output, session):
             prob = row["Probability"]
             is_selected = selected_comedian() == name
             
-            row_style = "cursor: pointer; "
+            row_style = "cursor: pointer; font-family: 'Instrument Serif', serif; "
             if is_selected:
-                row_style += "background-color: #007bff; color: white;"
+                row_style += "background-color: #8B4513; color: white;"
             else:
-                row_style += "background-color: #f8f9fa;"
+                row_style += "background-color: rgba(255, 248, 240, 0.6);"
             
             name_escaped = name.replace("'", "\\'")
             rows.append(
                 ui.tags.tr(
-                    ui.tags.td(name, style="padding: 10px; border: 1px solid #ccc;"),
-                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #ccc;"),
+                    ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
                     **{"onclick": f"Shiny.setInputValue('comedian_click', '{name_escaped}', {{priority: 'event'}});"},
                     style=row_style
                 )
@@ -91,12 +97,12 @@ def server(input, output, session):
         table = ui.tags.table(
             header,
             ui.tags.tbody(*rows),
-            style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;"
+            style="width: 100%; border-collapse: collapse; border: 2px solid #8B4513; font-family: 'Instrument Serif', serif;"
         )
         
         container = ui.tags.div(
             table,
-            style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px;"
+            style="max-height: 400px; overflow-y: auto; border: 2px solid #8B4513; padding: 10px; border-radius: 5px; background-color: rgba(255, 248, 240, 0.4);"
         )
         return container
     
@@ -116,8 +122,8 @@ def server(input, output, session):
     def footballers_list():
         header = ui.tags.thead(
             ui.tags.tr(
-                ui.tags.th("Name", style="padding: 10px; border: 1px solid #ccc;"),
-                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #ccc;")
+                ui.tags.th("Name", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);"),
+                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);")
             )
         )
         
@@ -127,17 +133,17 @@ def server(input, output, session):
             prob = row["Probability"]
             is_selected = selected_footballer() == name
             
-            row_style = "cursor: pointer; "
+            row_style = "cursor: pointer; font-family: 'Instrument Serif', serif; "
             if is_selected:
-                row_style += "background-color: #007bff; color: white;"
+                row_style += "background-color: #8B4513; color: white;"
             else:
-                row_style += "background-color: #f8f9fa;"
+                row_style += "background-color: rgba(255, 248, 240, 0.6);"
             
             name_escaped = name.replace("'", "\\'")
             rows.append(
                 ui.tags.tr(
-                    ui.tags.td(name, style="padding: 10px; border: 1px solid #ccc;"),
-                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #ccc;"),
+                    ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
                     **{"onclick": f"Shiny.setInputValue('footballer_click', '{name_escaped}', {{priority: 'event'}});"},
                     style=row_style
                 )
@@ -146,12 +152,12 @@ def server(input, output, session):
         table = ui.tags.table(
             header,
             ui.tags.tbody(*rows),
-            style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;"
+            style="width: 100%; border-collapse: collapse; border: 2px solid #8B4513; font-family: 'Instrument Serif', serif;"
         )
         
         container = ui.tags.div(
             table,
-            style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px;"
+            style="max-height: 400px; overflow-y: auto; border: 2px solid #8B4513; padding: 10px; border-radius: 5px; background-color: rgba(255, 248, 240, 0.4);"
         )
         return container
     
@@ -176,7 +182,7 @@ def server(input, output, session):
             comedian_prob = comedians_df[comedians_df["Name"] == comedian]["Probability"].values[0]
             footballer_prob = footballers_df[footballers_df["Name"] == footballer]["Probability"].values[0]
             product = comedian_prob * footballer_prob
-            return f"Probability: {comedian} ({comedian_prob:.2f}) × {footballer} ({footballer_prob:.2f}) = {product:.4f}"
+            return f"Probability of success: {comedian_prob:.2f} × {footballer_prob:.2f} = {product:.4f}"
         elif comedian:
             return f"Selected comedian: {comedian}. Select a footballer."
         elif footballer:
