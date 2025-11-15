@@ -1,0 +1,20 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "End Teddington Now!"
+  site-url: https://endteddingtonnow.com
+
+format:
+  html:
+    theme: default
+    toc: false
+    css: styles.css
+
+resources:
+  - CNAME
+
+filters:
+  - shinylive
+

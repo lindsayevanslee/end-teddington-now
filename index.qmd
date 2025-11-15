@@ -1,0 +1,21 @@
+---
+title: "END TEDDINGTON NOW!"
+---
+
+```{r}
+#| echo: false
+start_date <- as.Date("2025-07-23")
+today <- Sys.Date()
+days <- as.numeric(today - start_date)
+```
+
+It has been **`r days`** days since our international nightmare began.
+
+<!-- 
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 600
+#| code: app.py
+```
+ -->
