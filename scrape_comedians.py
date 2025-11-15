@@ -49,6 +49,186 @@ def extract_name_and_info(text):
         return name, text
     return None, text
 
+def extract_double_act_members(url, headers, double_act_name=None):
+    """Extract individual comedian names from a double act Wikipedia page"""
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        members = []
+        
+        # Extract potential surnames from double act name (e.g., "Baddiel and Skinner" -> ["Baddiel", "Skinner"])
+        target_surnames = []
+        if double_act_name:
+            # Remove common words and split
+            name_parts = re.sub(r'\b(and|&|the)\b', ' ', double_act_name, flags=re.IGNORECASE)
+            name_parts = [part.strip() for part in name_parts.split() if part.strip()]
+            # Take the last 2-3 words as potential surnames (double acts usually have 2 members)
+            if len(name_parts) >= 2:
+                target_surnames = name_parts[-2:]  # Last 2 words
+            elif len(name_parts) == 1:
+                # Single word - might be a compound name, try to split
+                target_surnames = [name_parts[0]]
+        
+        # Method 1: Look for infobox with Members/Stars/Cast row
+        infobox = soup.find('table', class_='infobox')
+        if infobox:
+            for row in infobox.find_all('tr'):
+                th = row.find('th')
+                if th and ('member' in th.get_text().lower() or 'star' in th.get_text().lower() or 'cast' in th.get_text().lower()):
+                    td = row.find('td')
+                    if td:
+                        # Find all links to Wikipedia articles
+                        links = td.find_all('a', href=True)
+                        for link in links:
+                            href = link.get('href', '')
+                            if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
+                                member_name = link.get_text().strip()
+                                if member_name:
+                                    member_url = urljoin('https://en.wikipedia.org', href)
+                                    members.append({
+                                        'name': member_name,
+                                        'url': member_url
+                                    })
+        
+        # Method 2: Use surname matching - search for names containing surnames from double act name
+        if not members and target_surnames:
+            content = soup.find('div', {'id': 'mw-content-text'})
+            if content:
+                # Get first few paragraphs (sometimes members are mentioned in second paragraph)
+                paragraphs = content.find_all('p', limit=3)
+                page_title = soup.find('h1', class_='firstHeading')
+                page_title_text = page_title.get_text().strip() if page_title else ""
+                
+                for first_p in paragraphs:
+                    if not first_p:
+                        continue
+                    # Look for links that contain the target surnames
+                    links = first_p.find_all('a', href=True)
+                    for link in links:
+                        href = link.get('href', '')
+                        if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
+                            link_text = link.get_text().strip()
+                            # Skip if it's the same as the page title
+                            if link_text.lower() not in page_title_text.lower() and len(link_text) > 3:
+                                # Check if this name contains any of the target surnames
+                                link_lower = link_text.lower()
+                                matches_surname = any(surname.lower() in link_lower for surname in target_surnames)
+                                
+                                if matches_surname:
+                                    # Additional validation: must look like a person's name
+                                    words = link_text.split()
+                                    # Exclude place names and organizations
+                                    exclude_place_words = ['united', 'kingdom', 'states', 'england', 'scotland', 'wales', 'ireland', 'city', 'county']
+                                    
+                                    if (2 <= len(words) <= 4 and 
+                                        all(word[0].isupper() if word else False for word in words) and
+                                        len(link_text) < 50 and
+                                        not link_text.isupper() and
+                                        not any(word.lower() in exclude_place_words for word in words)):
+                                        member_url = urljoin('https://en.wikipedia.org', href)
+                                        # Avoid duplicates (by exact name match)
+                                        if not any(m['name'] == link_text for m in members):
+                                            members.append({
+                                                'name': link_text,
+                                                'url': member_url
+                                            })
+                    # If we found members matching all surnames, we're probably done
+                    if len(members) >= len(target_surnames):
+                        break
+        
+        # Method 3: Look in the first paragraph for links to individual comedians (fallback)
+        if not members:
+            content = soup.find('div', {'id': 'mw-content-text'})
+            if content:
+                # Get first few paragraphs (sometimes members are mentioned in second paragraph)
+                paragraphs = content.find_all('p', limit=3)
+                page_title = soup.find('h1', class_='firstHeading')
+                page_title_text = page_title.get_text().strip() if page_title else ""
+                
+                for first_p in paragraphs:
+                    if not first_p:
+                        continue
+                    # Look for links that might be to individual comedians
+                    # Usually double act pages mention the members in the first sentence
+                    links = first_p.find_all('a', href=True)
+                    for link in links:
+                        href = link.get('href', '')
+                        if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
+                            link_text = link.get_text().strip()
+                            # Skip if it's the same as the page title or common words
+                            if link_text.lower() not in page_title_text.lower() and len(link_text) > 3:
+                                # Check if this looks like a person's name
+                                words = link_text.split()
+                                common_words = ['the', 'and', 'or', 'with', 'from', 'their', 'they', 'comedy', 'show', 'series', 
+                                              'talk', 'festival', 'fringe', 'theatre', 'theater', 'end', 'west', 'east', 'north', 'south',
+                                              'humour', 'humor', 'black', 'surreal', 'mighty', 'boosh', 'bbc', 'club', 'only', 'but', 'also',
+                                              'greater', 'manchester', 'london', 'live', 'three']
+                                
+                                # Exclude patterns that indicate organizations, places, or shows
+                                exclude_patterns = ['bbc', 'club', 'only', 'but also', 'greater', 'manchester', 'london live']
+                                exclude_place_words = ['united', 'kingdom', 'states', 'england', 'scotland', 'wales', 'ireland', 'city', 'county']
+                                
+                                # Filter: must be 2-4 words, each word capitalized, not in common words or exclude patterns
+                                if (2 <= len(words) <= 4 and 
+                                    all(word[0].isupper() if word else False for word in words) and
+                                    link_text.lower() not in common_words and
+                                    not any(word.lower() in common_words for word in words) and
+                                    not any(pattern in link_text.lower() for pattern in exclude_patterns) and
+                                    not any(word.lower() in exclude_place_words for word in words) and
+                                    len(link_text) < 50 and
+                                    # Must look like a person's name (typically first name + last name pattern)
+                                    not link_text.isupper()):  # Exclude all-caps (often acronyms)
+                                    member_url = urljoin('https://en.wikipedia.org', href)
+                                    # Avoid duplicates
+                                    if not any(m['name'] == link_text for m in members):
+                                        members.append({
+                                            'name': link_text,
+                                            'url': member_url
+                                        })
+                    # If we found at least 2 members, we're probably done
+                    if len(members) >= 2:
+                        break
+        
+        # Method 4: Look for a "Members" or "Cast" section
+        if not members:
+            content = soup.find('div', {'id': 'mw-content-text'})
+            if content:
+                for heading in content.find_all(['h2', 'h3']):
+                    text = heading.get_text().lower()
+                    if 'member' in text or 'cast' in text:
+                        # Get next list or paragraph
+                        next_elem = heading.find_next(['ul', 'ol', 'p'])
+                        if next_elem:
+                            links = next_elem.find_all('a', href=True)
+                            for link in links:
+                                href = link.get('href', '')
+                                if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
+                                    member_name = link.get_text().strip()
+                                    # Additional validation: must look like a person's name
+                                    words = member_name.split()
+                                    exclude_place_words = ['united', 'kingdom', 'states', 'england', 'scotland', 'wales', 'ireland', 'city', 'county']
+                                    
+                                    if (member_name and len(member_name) > 3 and
+                                        2 <= len(words) <= 4 and
+                                        all(word[0].isupper() if word else False for word in words) and
+                                        not any(word.lower() in exclude_place_words for word in words) and
+                                        not member_name.isupper()):
+                                        member_url = urljoin('https://en.wikipedia.org', href)
+                                        if not any(m['name'] == member_name for m in members):
+                                            members.append({
+                                                'name': member_name,
+                                                'url': member_url
+                                            })
+                            if members:
+                                break
+        
+        return members
+    except Exception as e:
+        print(f"    Warning: Could not extract members from {url}: {e}")
+        return []
+
 def scrape_wikipedia_page():
     """Scrape the British comedians Wikipedia page"""
     url = "https://en.wikipedia.org/wiki/List_of_British_comedians"
@@ -63,6 +243,9 @@ def scrape_wikipedia_page():
     print(f"Fetching {url}...")
     response = requests.get(url, headers=headers)
     response.raise_for_status()
+    
+    # Store headers for use in extract_double_act_members
+    scrape_wikipedia_page.headers = headers
     
     soup = BeautifulSoup(response.content, 'html.parser')
     
@@ -219,6 +402,25 @@ def scrape_wikipedia_page():
                         if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
                             wiki_url = urljoin(base_url, href)
                     
+                    # Special handling for Comedy double acts: extract individual members
+                    if current_type == 'Comedy double acts' and wiki_url:
+                        print(f"  Extracting members from double act: {name}")
+                        members = extract_double_act_members(wiki_url, scrape_wikipedia_page.headers, double_act_name=name)
+                        if members:
+                            # Add each member as an individual comedian
+                            for member in members:
+                                comedians.append({
+                                    'Name': member['name'],
+                                    'URL': member['url'],
+                                    'Type': current_type or 'Unknown',
+                                    'BirthYear': '',  # Will need to be filled from member's page if needed
+                                    'DeathYear': ''
+                                })
+                            continue  # Skip adding the group name
+                        else:
+                            print(f"    Could not extract members, keeping group name: {name}")
+                    
+                    # Add the regular entry (or group name if member extraction failed)
                     comedians.append({
                         'Name': name,
                         'URL': wiki_url or '',
