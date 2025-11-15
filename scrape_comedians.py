@@ -160,35 +160,72 @@ def scrape_wikipedia_page():
             
             # Process all list items
             for li in current_list.find_all('li', recursive=False):
-                text = li.get_text()
+                # Check if this list item has a nested list (group with sub-items)
+                nested_list = li.find(['ul', 'ol'], recursive=False)
                 
-                # Skip empty items
-                if not text.strip():
-                    continue
-                
-                name, full_text = extract_name_and_info(text)
-                if not name:
-                    continue
-                
-                # Extract years
-                birth_year, death_year = extract_years(full_text)
-                
-                # Try to find the Wikipedia link
-                wiki_url = None
-                link = li.find('a', href=True)
-                if link and link.get('href'):
-                    href = link.get('href')
-                    # Only include links to Wikipedia articles (not external links, categories, etc.)
-                    if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
-                        wiki_url = urljoin(base_url, href)
-                
-                comedians.append({
-                    'Name': name,
-                    'URL': wiki_url or '',
-                    'Type': current_type or 'Unknown',
-                    'BirthYear': birth_year if birth_year else '',
-                    'DeathYear': death_year if death_year else ''
-                })
+                if nested_list:
+                    # This is a group - process the nested items instead
+                    for sub_li in nested_list.find_all('li', recursive=False):
+                        text = sub_li.get_text()
+                        
+                        # Skip empty items
+                        if not text.strip():
+                            continue
+                        
+                        name, full_text = extract_name_and_info(text)
+                        if not name:
+                            continue
+                        
+                        # Extract years
+                        birth_year, death_year = extract_years(full_text)
+                        
+                        # Try to find the Wikipedia link
+                        wiki_url = None
+                        link = sub_li.find('a', href=True)
+                        if link and link.get('href'):
+                            href = link.get('href')
+                            # Only include links to Wikipedia articles (not external links, categories, etc.)
+                            if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
+                                wiki_url = urljoin(base_url, href)
+                        
+                        comedians.append({
+                            'Name': name,
+                            'URL': wiki_url or '',
+                            'Type': current_type or 'Unknown',
+                            'BirthYear': birth_year if birth_year else '',
+                            'DeathYear': death_year if death_year else ''
+                        })
+                else:
+                    # Regular list item (not a group)
+                    text = li.get_text()
+                    
+                    # Skip empty items
+                    if not text.strip():
+                        continue
+                    
+                    name, full_text = extract_name_and_info(text)
+                    if not name:
+                        continue
+                    
+                    # Extract years
+                    birth_year, death_year = extract_years(full_text)
+                    
+                    # Try to find the Wikipedia link
+                    wiki_url = None
+                    link = li.find('a', href=True)
+                    if link and link.get('href'):
+                        href = link.get('href')
+                        # Only include links to Wikipedia articles (not external links, categories, etc.)
+                        if href.startswith('/wiki/') and ':' not in href.split('/wiki/')[1]:
+                            wiki_url = urljoin(base_url, href)
+                    
+                    comedians.append({
+                        'Name': name,
+                        'URL': wiki_url or '',
+                        'Type': current_type or 'Unknown',
+                        'BirthYear': birth_year if birth_year else '',
+                        'DeathYear': death_year if death_year else ''
+                    })
             
             # Find the next list
             current_list = current_list.find_next(['ul', 'ol'])
