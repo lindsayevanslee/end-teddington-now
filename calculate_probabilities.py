@@ -199,8 +199,8 @@ class TeddingtonSightingModel:
         
         return probability
     
-    def generate_probability_csvs(self, comedians_output='comedians_probability.csv', 
-                                 footballers_output='footballers_probability.csv'):
+    def generate_probability_csvs(self, comedians_output='data/comedians_probability.csv', 
+                                 footballers_output='data/footballers_probability.csv'):
         """Generate probability CSVs for both comedians and footballers"""
         
         # Calculate comedian probabilities
