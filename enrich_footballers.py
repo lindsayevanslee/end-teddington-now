@@ -21,6 +21,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+from datetime import date
+
+# Teddington, UK coordinates
+TEDDINGTON_LAT = 51.4244
+TEDDINGTON_LON = -0.3306
+TEDDINGTON_COORDS = (TEDDINGTON_LAT, TEDDINGTON_LON)
 
 def extract_player_data_from_page(url, driver=None):
     """Extract player metadata from a fbref.com player page"""
@@ -282,6 +290,72 @@ def extract_player_data_from_page(url, driver=None):
         print(f"    Error: {e}")
         return {}
 
+def calculate_age(birth_date):
+    """Calculate age from birth date string (e.g., 'July 11, 1978' or '1978')"""
+    if not birth_date or not str(birth_date).strip():
+        return None
+    
+    try:
+        birth_date_str = str(birth_date).strip()
+        
+        # Try to parse various date formats
+        # Format 1: "July 11, 1978" or "11 July 1978"
+        date_patterns = [
+            r'(\w+)\s+(\d{1,2}),?\s+(\d{4})',  # "July 11, 1978"
+            r'(\d{1,2})\s+(\w+)\s+(\d{4})',  # "11 July 1978"
+            r'(\d{4})',  # Just year "1978"
+        ]
+        
+        birth_year = None
+        for pattern in date_patterns:
+            match = re.search(pattern, birth_date_str)
+            if match:
+                if len(match.groups()) == 3:
+                    # Full date - extract year
+                    birth_year = int(match.group(3))
+                elif len(match.groups()) == 1:
+                    # Just year
+                    birth_year = int(match.group(1))
+                break
+        
+        if birth_year:
+            current_year = date.today().year
+            return current_year - birth_year
+        
+        return None
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+def geocode_location(location):
+    """Geocode a location string to get coordinates"""
+    if not location or not str(location).strip():
+        return None
+    
+    try:
+        geolocator = Nominatim(user_agent="EndTeddingtonNowBot/1.0")
+        # Add a small delay to respect rate limits
+        time.sleep(1)
+        location_obj = geolocator.geocode(location, timeout=10)
+        
+        if location_obj:
+            return (location_obj.latitude, location_obj.longitude)
+        return None
+    except Exception as e:
+        print(f"    Geocoding error for '{location}': {e}")
+        return None
+
+def calculate_distance(coords):
+    """Calculate distance in kilometers from Teddington to given coordinates"""
+    if not coords:
+        return None
+    
+    try:
+        distance = geodesic(TEDDINGTON_COORDS, coords).kilometers
+        return round(distance, 2)
+    except Exception as e:
+        print(f"    Distance calculation error: {e}")
+        return None
+
 def enrich_footballer(row, driver, delay=6):
     """Enrich a single footballer row by scraping their page"""
     url = row.get('URL', '')
@@ -302,6 +376,23 @@ def enrich_footballer(row, driver, delay=6):
         enriched_row = row.copy()
         for key, value in player_data.items():
             enriched_row[f'Scraped_{key}'] = value
+        
+        # Calculate age from birth date
+        birth_date = player_data.get('BirthDate')
+        if birth_date:
+            age = calculate_age(birth_date)
+            if age is not None:
+                enriched_row['Scraped_Age'] = age
+        
+        # Calculate distance from Teddington if birthplace is available
+        birthplace = player_data.get('Birthplace')
+        if birthplace:
+            coords = geocode_location(birthplace)
+            if coords:
+                distance = calculate_distance(coords)
+                if distance is not None:
+                    enriched_row['Scraped_DistanceFromTeddington'] = distance
+        
         return enriched_row
     else:
         print("✗")
@@ -404,11 +495,15 @@ def enrich_footballers(input_file, output_file, limit=None, delay=6):
         with_birthplace = sum(1 for f in enriched_footballers if f.get('Scraped_Birthplace'))
         with_height = sum(1 for f in enriched_footballers if f.get('Scraped_Height'))
         with_weight = sum(1 for f in enriched_footballers if f.get('Scraped_Weight'))
+        with_age = sum(1 for f in enriched_footballers if f.get('Scraped_Age'))
+        with_distance = sum(1 for f in enriched_footballers if f.get('Scraped_DistanceFromTeddington'))
         
         print(f"  With birth date: {with_birthdate}")
         print(f"  With birthplace: {with_birthplace}")
         print(f"  With height: {with_height}")
         print(f"  With weight: {with_weight}")
+        print(f"  With age: {with_age}")
+        print(f"  With distance from Teddington: {with_distance}")
         
         # Show sample of enriched data
         print("\nFirst 3 enriched entries:")
@@ -420,6 +515,10 @@ def enrich_footballers(input_file, output_file, limit=None, delay=6):
                 print(f"     Birthplace: {footballer.get('Scraped_Birthplace')}")
             if footballer.get('Scraped_Height'):
                 print(f"     Height: {footballer.get('Scraped_Height')}")
+            if footballer.get('Scraped_Age'):
+                print(f"     Age: {footballer.get('Scraped_Age')}")
+            if footballer.get('Scraped_DistanceFromTeddington'):
+                print(f"     Distance from Teddington: {footballer.get('Scraped_DistanceFromTeddington')} km")
     else:
         print("No data to save.")
 
