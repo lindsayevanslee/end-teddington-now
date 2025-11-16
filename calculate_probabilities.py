@@ -47,11 +47,11 @@ class TeddingtonSightingModel:
         if pd.notna(row['PageLength']):
             # Log scale for page length
             if row['PageLength'] > 10000:  # Very famous
-                fame_score = 0.9
+                fame_score = 0.1
             elif row['PageLength'] > 5000:  # Well known
-                fame_score = 0.7
+                fame_score = 0.3
             elif row['PageLength'] > 2000:  # Known
-                fame_score = 0.5
+                fame_score = 0.9
             else:
                 fame_score = 0.3
         
