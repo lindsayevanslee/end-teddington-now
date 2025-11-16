@@ -11,7 +11,7 @@ days <- as.numeric(today - start_date)
 
 It has been **`r days`** days since our collective nightmare began.
 
-
+Use the tool below to compare the probabilities of different combinations of comedians and footballers that Max Rushden happened to see during the Teddington Days. Let's end his reign of terror. 
 
 ```{shinylive-python}
 #| standalone: true
@@ -256,3 +256,7 @@ def server(input, output, session):
 app = App(app_ui, server)
 ```
 
+For more details on methodology and the full code, see the [GitHub repo](https://github.com/lindsayevanslee/end-teddington-now).
+
+#initforlife
+#everythingisshowbiz
