@@ -64,6 +64,10 @@ app_ui = ui.page_fluid(
             border-color: #654321;
             background-color: rgba(255, 248, 240, 1);
         }
+        /* Prevent scroll jumping when table updates */
+        .table-container {
+            scroll-behavior: auto;
+        }
     """),
     ui.tags.div(
         ui.output_text("result"),
@@ -104,6 +108,12 @@ def server(input, output, session):
     selected_comedian = reactive.Value(None)
     selected_footballer = reactive.Value(None)
     
+    # Store scroll positions in session
+    if not hasattr(session, '_comedians_scroll'):
+        session._comedians_scroll = 0
+    if not hasattr(session, '_footballers_scroll'):
+        session._footballers_scroll = 0
+    
     @output
     @render.ui
     def comedians_list():
@@ -138,7 +148,7 @@ def server(input, output, session):
                 ui.tags.tr(
                     ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
                     ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
-                    **{"onclick": f"Shiny.setInputValue('comedian_click', '{name_escaped}', {{priority: 'event'}});"},
+                    **{"onclick": f"(function(e){{ var cont = document.getElementById('comedians-table-container'); if(cont){{ window._comediansScrollPos = cont.scrollTop; }} Shiny.setInputValue('comedian_click', '{name_escaped}', {{priority: 'event'}}); }})(event);"},
                     style=row_style
                 )
             )
@@ -152,9 +162,32 @@ def server(input, output, session):
         container = ui.tags.div(
             table,
             class_="table-container",
+            id="comedians-table-container",
             style="max-height: 400px; overflow-y: auto;"
         )
-        return container
+        # Add script to restore scroll position after Shiny updates
+        script = ui.tags.script("""
+            (function() {
+                if (typeof window._comediansScrollPos !== 'undefined' && window._comediansScrollPos !== null) {
+                    var container = document.getElementById('comedians-table-container');
+                    if (container) {
+                        // Try multiple times as Shiny may update the DOM
+                        var attempts = 0;
+                        var restoreScroll = function() {
+                            if (container && container.scrollTop !== window._comediansScrollPos) {
+                                container.scrollTop = window._comediansScrollPos;
+                            }
+                            attempts++;
+                            if (attempts < 10) {
+                                setTimeout(restoreScroll, 50);
+                            }
+                        };
+                        setTimeout(restoreScroll, 10);
+                    }
+                }
+            })();
+        """)
+        return ui.tags.div(container, script)
     
     @reactive.Effect
     @reactive.event(input.comedian_click)
@@ -201,7 +234,7 @@ def server(input, output, session):
                 ui.tags.tr(
                     ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
                     ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
-                    **{"onclick": f"Shiny.setInputValue('footballer_click', '{name_escaped}', {{priority: 'event'}});"},
+                    **{"onclick": f"(function(e){{ var cont = document.getElementById('footballers-table-container'); if(cont){{ window._footballersScrollPos = cont.scrollTop; }} Shiny.setInputValue('footballer_click', '{name_escaped}', {{priority: 'event'}}); }})(event);"},
                     style=row_style
                 )
             )
@@ -215,9 +248,32 @@ def server(input, output, session):
         container = ui.tags.div(
             table,
             class_="table-container",
+            id="footballers-table-container",
             style="max-height: 400px; overflow-y: auto;"
         )
-        return container
+        # Add script to restore scroll position after Shiny updates
+        script = ui.tags.script("""
+            (function() {
+                if (typeof window._footballersScrollPos !== 'undefined' && window._footballersScrollPos !== null) {
+                    var container = document.getElementById('footballers-table-container');
+                    if (container) {
+                        // Try multiple times as Shiny may update the DOM
+                        var attempts = 0;
+                        var restoreScroll = function() {
+                            if (container && container.scrollTop !== window._footballersScrollPos) {
+                                container.scrollTop = window._footballersScrollPos;
+                            }
+                            attempts++;
+                            if (attempts < 10) {
+                                setTimeout(restoreScroll, 50);
+                            }
+                        };
+                        setTimeout(restoreScroll, 10);
+                    }
+                }
+            })();
+        """)
+        return ui.tags.div(container, script)
     
     @reactive.Effect
     @reactive.event(input.footballer_click)
