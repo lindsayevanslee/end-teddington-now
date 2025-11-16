@@ -137,7 +137,7 @@ def server(input, output, session):
             rows.append(
                 ui.tags.tr(
                     ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
-                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
                     **{"onclick": f"Shiny.setInputValue('comedian_click', '{name_escaped}', {{priority: 'event'}});"},
                     style=row_style
                 )
@@ -200,7 +200,7 @@ def server(input, output, session):
             rows.append(
                 ui.tags.tr(
                     ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
-                    ui.tags.td(f"{prob:.2f}", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
                     **{"onclick": f"Shiny.setInputValue('footballer_click', '{name_escaped}', {{priority: 'event'}});"},
                     style=row_style
                 )
@@ -240,7 +240,7 @@ def server(input, output, session):
             comedian_prob = comedians_df[comedians_df["Name"] == comedian]["Probability"].values[0]
             footballer_prob = footballers_df[footballers_df["Name"] == footballer]["Probability"].values[0]
             product = comedian_prob * footballer_prob
-            return f"Probability of success: {comedian_prob:.2f} × {footballer_prob:.2f} = {product:.4f}"
+            return f"Probability of success: {comedian_prob*100:.2f}% × {footballer_prob*100:.2f}% = {product*100:.2f}%"
         elif comedian:
             return f"Selected comedian: {comedian}. Select a footballer."
         elif footballer:
