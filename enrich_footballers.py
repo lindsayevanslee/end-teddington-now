@@ -3,7 +3,9 @@
 Enrich footballer data by scraping individual player pages from fbref.com.
 Extracts additional metadata from each player's page.
 
-Note: fbref.com has scraping restrictions - limit to 1 request every 6 seconds.
+Note: fbref.com (sports-reference.com) has a rate limit of 10 requests per minute.
+This script uses a 6-second delay between requests to comply with this limit.
+See: https://www.sports-reference.com/bot-traffic.html
 """
 
 import csv
@@ -449,8 +451,8 @@ def enrich_footballers(input_file, output_file, limit=None, delay=6):
         total = len(footballers)
         
         print(f"\nEnriching {total} footballers by scraping their pages...")
-        print(f"This will take approximately {total * delay / 60:.1f} minutes (rate limit: {delay} seconds between requests)")
-        print("Note: fbref.com restricts scraping to 1 request every 6 seconds\n")
+        print(f"This will take approximately {total * delay / 60:.1f} minutes (using {delay} second delay between requests)")
+        print(f"Note: fbref.com rate limit is 10 requests/minute, so {delay} seconds ensures compliance\n")
         
         for i, footballer in enumerate(footballers, 1):
             print(f"[{i}/{total}]", end=' ')
@@ -528,13 +530,13 @@ if __name__ == '__main__':
     parser.add_argument('output_file', help='Output CSV file for enriched data')
     parser.add_argument('-n', '--limit', type=int, help='Process only first N rows for testing')
     parser.add_argument('--delay', type=int, default=6, 
-                       help='Delay between requests in seconds (default: 6, minimum recommended: 6)')
+                       help='Delay between requests in seconds (default: 6, recommended minimum: 6 to avoid being blocked)')
     
     args = parser.parse_args()
     
-    # Ensure delay is at least 6 seconds (fbref.com requirement)
+    # Ensure delay meets fbref.com rate limit (10 requests/minute = 6 seconds minimum)
     if args.delay < 6:
-        print("Warning: Delay is less than 6 seconds. Setting to 6 seconds (fbref.com requirement).")
+        print(f"Warning: Delay is less than 6 seconds. Setting to 6 seconds to comply with fbref.com rate limit (10 requests/minute).")
         args.delay = 6
     
     enrich_footballers(
