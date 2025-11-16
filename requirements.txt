@@ -10,3 +10,7 @@ lxml>=4.9.0
 # Geocoding dependencies
 geopy>=2.4.0
 
+# Web scraping with JavaScript support
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
