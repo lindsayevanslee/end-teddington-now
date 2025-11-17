@@ -272,7 +272,7 @@ class TeddingtonSightingModel:
 # Usage:
 # Load your data
 comedians_df = pd.read_csv('data/comedians_enriched.csv')
-footballers_df = pd.read_csv('data/footballers_enriched_n100.csv')
+footballers_df = pd.read_csv('data/footballers_enriched.csv')
 
 # Create model and generate CSVs
 model = TeddingtonSightingModel(comedians_df, footballers_df)
