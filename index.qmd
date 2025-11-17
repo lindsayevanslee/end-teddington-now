@@ -42,7 +42,7 @@ app_ui = ui.page_fluid(
             width: 100%;
         }
         .table-container {
-            border: 2px solid #8B4513;
+            border: 2px solid #693010;
             padding: 10px;
             border-radius: 5px;
             background-color: rgba(255, 248, 240, 0.4);
@@ -53,7 +53,7 @@ app_ui = ui.page_fluid(
             width: 100%;
             padding: 8px 12px;
             margin-bottom: 10px;
-            border: 2px solid #8B4513;
+            border: 2px solid #693010;
             border-radius: 5px;
             font-family: 'Instrument Serif', serif;
             font-size: 1em;
@@ -71,7 +71,7 @@ app_ui = ui.page_fluid(
     """),
     ui.tags.div(
         ui.output_ui("result"),
-        style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding: 15px; background-color: rgba(255, 248, 240, 0.8); border-radius: 5px; border: 2px solid #8B4513;"
+        style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding: 15px; background-color: rgba(255, 248, 240, 0.8); border-radius: 5px; border: 2px solid #693010;"
     ),
     ui.row(
         ui.column(6,
@@ -126,8 +126,8 @@ def server(input, output, session):
         
         header = ui.tags.thead(
             ui.tags.tr(
-                ui.tags.th("Name", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);"),
-                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);")
+                ui.tags.th("Name", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);"),
+                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);")
             )
         )
         
@@ -139,15 +139,15 @@ def server(input, output, session):
             
             row_style = "cursor: pointer; font-family: 'Instrument Serif', serif; "
             if is_selected:
-                row_style += "background-color: #8B4513; color: white;"
+                row_style += "background-color: #693010; color: white;"
             else:
                 row_style += "background-color: rgba(255, 248, 240, 0.6);"
             
             name_escaped = name.replace("'", "\\'")
             rows.append(
                 ui.tags.tr(
-                    ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
-                    ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(name, style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
                     **{"onclick": f"(function(e){{ var cont = document.getElementById('comedians-table-container'); if(cont){{ window._comediansScrollPos = cont.scrollTop; }} Shiny.setInputValue('comedian_click', '{name_escaped}', {{priority: 'event'}}); }})(event);"},
                     style=row_style
                 )
@@ -156,7 +156,7 @@ def server(input, output, session):
         table = ui.tags.table(
             header,
             ui.tags.tbody(*rows),
-            style="width: 100%; border-collapse: collapse; border: 2px solid #8B4513; font-family: 'Instrument Serif', serif;"
+            style="width: 100%; border-collapse: collapse; border: 2px solid #693010; font-family: 'Instrument Serif', serif;"
         )
         
         container = ui.tags.div(
@@ -212,8 +212,8 @@ def server(input, output, session):
         
         header = ui.tags.thead(
             ui.tags.tr(
-                ui.tags.th("Name", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);"),
-                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);")
+                ui.tags.th("Name", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);"),
+                ui.tags.th("Probability", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif; background-color: rgba(139, 69, 19, 0.2);")
             )
         )
         
@@ -225,15 +225,15 @@ def server(input, output, session):
             
             row_style = "cursor: pointer; font-family: 'Instrument Serif', serif; "
             if is_selected:
-                row_style += "background-color: #8B4513; color: white;"
+                row_style += "background-color: #693010; color: white;"
             else:
                 row_style += "background-color: rgba(255, 248, 240, 0.6);"
             
             name_escaped = name.replace("'", "\\'")
             rows.append(
                 ui.tags.tr(
-                    ui.tags.td(name, style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
-                    ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #8B4513; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(name, style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
+                    ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
                     **{"onclick": f"(function(e){{ var cont = document.getElementById('footballers-table-container'); if(cont){{ window._footballersScrollPos = cont.scrollTop; }} Shiny.setInputValue('footballer_click', '{name_escaped}', {{priority: 'event'}}); }})(event);"},
                     style=row_style
                 )
@@ -242,7 +242,7 @@ def server(input, output, session):
         table = ui.tags.table(
             header,
             ui.tags.tbody(*rows),
-            style="width: 100%; border-collapse: collapse; border: 2px solid #8B4513; font-family: 'Instrument Serif', serif;"
+            style="width: 100%; border-collapse: collapse; border: 2px solid #693010; font-family: 'Instrument Serif', serif;"
         )
         
         container = ui.tags.div(
@@ -298,7 +298,7 @@ def server(input, output, session):
             product = comedian_prob * footballer_prob
             return ui.tags.div(
                 f"Probability of success: {comedian_prob*100:.2f}% × {footballer_prob*100:.2f}% = ",
-                ui.tags.span(f"{product*100:.4f}%", style="color: #800020; font-weight: bold;")
+                ui.tags.span(f"{product*100:.4f}%", style="color: #a60029; font-weight: bold;")
             )
         elif comedian:
             return ui.tags.div(f"Selected comedian: {comedian}. Select a footballer.")
