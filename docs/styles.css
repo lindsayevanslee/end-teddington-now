@@ -1,0 +1,49 @@
+/* Import Google Font - Instrument Serif */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&display=swap');
+
+/* Remove navbar completely */
+.navbar,
+.navbar-container,
+.quarto-navbar {
+    display: none !important;
+}
+
+/* Set body font to Instrument Serif Regular 400 */
+body {
+    padding-top: 0 !important;
+    font-family: 'Instrument Serif', serif;
+    font-style: normal;
+    background-color: #f5e5ba;
+}
+
+/* Center the title */
+.quarto-title-block {
+    text-align: center;
+}
+
+.quarto-title-block .title {
+    text-align: center;
+    width: 100%;
+}
+
+/* Title font - Instrument Serif Regular 400 Italic */
+h1.title {
+    text-align: center;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 400%;
+}
+
+ 
+/* Style shinylive app container */
+/* 
+.shinylive-python,
+.shinylive-container {
+    background-color: #f5e5ba !important;
+    font-family: 'Instrument Serif', serif !important;
+} 
+ */
+
