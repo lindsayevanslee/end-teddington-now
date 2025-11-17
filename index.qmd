@@ -310,7 +310,7 @@ def server(input, output, session):
 app = App(app_ui, server)
 ```
 
-For more details on methodology and the full code, see the [GitHub repo](https://github.com/lindsayevanslee/end-teddington-now).
+For more details on methodology and the full code, see the [GitHub repo](https://github.com/lindsayevanslee/end-teddington-now). Stats will change as the data and model are refined.
 
 #initforlife
 #everythingisshowbiz
