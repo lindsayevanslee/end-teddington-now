@@ -79,8 +79,14 @@ class TeddingtonSightingModel:
         """Calculate probability for a footballer being in Teddington"""
         
         # 1. Active Status Filter
+        # Priority: Recently retired > Long retired > Active
         base_multiplier = 1.0
-        if row.get('IsActive') == 'No':
+        is_active = row.get('IsActive') == 'Yes'
+        
+        if is_active:
+            # Currently active players are least likely
+            base_multiplier = 0.3
+        else:
             # Try to get YearEnded, or estimate it if missing
             year_ended = None
             if pd.notna(row.get('YearEnded')):
@@ -99,17 +105,24 @@ class TeddingtonSightingModel:
                         if year_ended > 2024:
                             year_ended = 2024
                     except (ValueError, TypeError):
-                        base_multiplier = 0.1
+                        # Can't determine retirement status, treat as long retired
+                        base_multiplier = 0.6
                 else:
-                    base_multiplier = 0.1
+                    # Can't determine retirement status, treat as long retired
+                    base_multiplier = 0.6
             
             # Calculate years since retirement if we have a valid year_ended
             if year_ended is not None:
                 years_since_retirement = 2024 - year_ended
-                if years_since_retirement > 10:
-                    base_multiplier = 0.05  # Very unlikely for long-retired
+                if years_since_retirement <= 0:
+                    # Still active or just retired this year
+                    base_multiplier = 0.3
+                elif years_since_retirement <= 10:
+                    # Recently retired (most likely)
+                    base_multiplier = 1.0
                 else:
-                    base_multiplier = 0.3 * np.exp(-years_since_retirement/5)
+                    # Long retired (less likely than recently retired, but more likely than active)
+                    base_multiplier = 0.6
         
         # 2. Distance Component (40% weight)
         distance_score = 0.05  # default for unknown
