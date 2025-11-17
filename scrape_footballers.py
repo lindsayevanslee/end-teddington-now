@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
 Scrape English footballers from fbref.com HTML file and create a CSV file.
+
+Requires the site https://fbref.com/en/country/players/ENG/England-Football-Players 
+to be manually downloaded and saved as data/fbref.html
 """
 
 from bs4 import BeautifulSoup, Comment
