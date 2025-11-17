@@ -70,7 +70,7 @@ app_ui = ui.page_fluid(
         }
     """),
     ui.tags.div(
-        ui.output_text("result"),
+        ui.output_ui("result"),
         style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding: 15px; background-color: rgba(255, 248, 240, 0.8); border-radius: 5px; border: 2px solid #8B4513;"
     ),
     ui.row(
@@ -287,7 +287,7 @@ def server(input, output, session):
                 selected_footballer.set(clicked_name)
     
     @output
-    @render.text
+    @render.ui
     def result():
         comedian = selected_comedian()
         footballer = selected_footballer()
@@ -296,13 +296,16 @@ def server(input, output, session):
             comedian_prob = comedians_df[comedians_df["Name"] == comedian]["Probability"].values[0]
             footballer_prob = footballers_df[footballers_df["Name"] == footballer]["Probability"].values[0]
             product = comedian_prob * footballer_prob
-            return f"Probability of success: {comedian_prob*100:.2f}% × {footballer_prob*100:.2f}% = {product*100:.2f}%"
+            return ui.tags.div(
+                f"Probability of success: {comedian_prob*100:.2f}% × {footballer_prob*100:.2f}% = ",
+                ui.tags.span(f"{product*100:.4f}%", style="color: #800020; font-weight: bold;")
+            )
         elif comedian:
-            return f"Selected comedian: {comedian}. Select a footballer."
+            return ui.tags.div(f"Selected comedian: {comedian}. Select a footballer.")
         elif footballer:
-            return f"Selected footballer: {footballer}. Select a comedian."
+            return ui.tags.div(f"Selected footballer: {footballer}. Select a comedian.")
         else:
-            return "Select one comedian and one footballer."
+            return ui.tags.div("Select one comedian and one footballer.")
 
 app = App(app_ui, server)
 ```
