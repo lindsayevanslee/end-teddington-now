@@ -2,12 +2,31 @@ import pandas as pd
 import numpy as np
 
 class TeddingtonSightingModel:
-    def __init__(self, comedians_df, footballers_df):
+    def __init__(self, comedians_df, footballers_df, 
+                 combinations_file='data/combinations_2025-11-25.csv'):
         self.comedians = comedians_df.copy()
         self.footballers = footballers_df.copy()
         
+        # Load combinations file and extract unique comedians and footballers
+        try:
+            combinations_df = pd.read_csv(combinations_file)
+            self.comedians_subset = set(combinations_df['Comedian'].unique())
+            self.footballers_subset = set(combinations_df['Footballer'].unique())
+            print(f"Loaded {len(self.comedians_subset)} unique comedians from combinations file")
+            print(f"Loaded {len(self.footballers_subset)} unique footballers from combinations file")
+        except FileNotFoundError:
+            print(f"Warning: {combinations_file} not found. All comedians and footballers will be included.")
+            self.comedians_subset = None
+            self.footballers_subset = None
+        
     def calculate_comedian_probability(self, row):
         """Calculate probability for a comedian being in Teddington"""
+        
+        # Check if comedian is in subset (if subset is defined)
+        if self.comedians_subset is not None:
+            comedian_name = row['Name']
+            if comedian_name not in self.comedians_subset:
+                return 0.0
         
         # Dead people don't visit Teddington
         if pd.notna(row['DeathYear']):
@@ -81,6 +100,12 @@ class TeddingtonSightingModel:
     
     def calculate_footballer_probability(self, row):
         """Calculate probability for a footballer being in Teddington"""
+        
+        # Check if footballer is in subset (if subset is defined)
+        if self.footballers_subset is not None:
+            footballer_name = row['Name']
+            if footballer_name not in self.footballers_subset:
+                return 0.0
         
         # 1. Active Status Filter
         # Priority: Recently retired > Long retired > Active
