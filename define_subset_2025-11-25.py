@@ -45,13 +45,14 @@ def find_combinations_with_target_probability(snapshot_folder, target_prob=0.000
     
     # Create all combinations using merge (cartesian product)
     # Add a dummy key to create all combinations
-    comedians_renamed = comedians_df[['Name', 'Probability']].rename(
-        columns={'Name': 'Comedian', 'Probability': 'Comedian_Probability'}
+    # URLs are always included
+    comedians_renamed = comedians_df[['Name', 'URL', 'Probability']].rename(
+        columns={'Name': 'Comedian', 'URL': 'Comedian_URL', 'Probability': 'Comedian_Probability'}
     )
     comedians_renamed['key'] = 1
     
-    footballers_renamed = footballers_df[['Name', 'Probability']].rename(
-        columns={'Name': 'Footballer', 'Probability': 'Footballer_Probability'}
+    footballers_renamed = footballers_df[['Name', 'URL', 'Probability']].rename(
+        columns={'Name': 'Footballer', 'URL': 'Footballer_URL', 'Probability': 'Footballer_Probability'}
     )
     footballers_renamed['key'] = 1
     
@@ -125,33 +126,44 @@ def main():
             if len(matching_combinations) > 10:
                 print(f"\n... and {len(matching_combinations) - 10} more combinations")
             
-            # Extract unique comedians and footballers
-            unique_comedians = matching_combinations['Comedian'].unique()
-            unique_footballers = matching_combinations['Footballer'].unique()
+            # Extract unique comedians and footballers based on Name and URL
+            # This ensures uniqueness across both name and URL (handles duplicate names with different URLs)
+            unique_comedians_df = matching_combinations[['Comedian', 'Comedian_URL']].drop_duplicates(subset=['Comedian', 'Comedian_URL'], keep='first')
+            unique_comedians_df = unique_comedians_df.sort_values(['Comedian', 'Comedian_URL']).rename(
+                columns={'Comedian': 'Name', 'Comedian_URL': 'URL'}
+            )
+            
+            unique_footballers_df = matching_combinations[['Footballer', 'Footballer_URL']].drop_duplicates(subset=['Footballer', 'Footballer_URL'], keep='first')
+            unique_footballers_df = unique_footballers_df.sort_values(['Footballer', 'Footballer_URL']).rename(
+                columns={'Footballer': 'Name', 'Footballer_URL': 'URL'}
+            )
             
             # Save all combinations to CSV
             matching_combinations.to_csv(combinations_output_file, index=False)
             print(f"\nAll {len(matching_combinations)} combinations saved to: {combinations_output_file}")
         else:
             print("No matching combinations found.")
-            unique_comedians = []
-            unique_footballers = []
             
-            # Create empty combinations file
-            empty_combinations_df = pd.DataFrame(columns=['Comedian', 'Comedian_Probability', 'Footballer', 'Footballer_Probability', 'Combined_Probability', 'Rounded_Probability'])
+            # Create empty DataFrames with Name and URL columns
+            unique_comedians_df = pd.DataFrame(columns=['Name', 'URL'])
+            unique_footballers_df = pd.DataFrame(columns=['Name', 'URL'])
+            
+            # Create empty combinations file with all columns including URLs
+            empty_combinations_df = pd.DataFrame(columns=[
+                'Comedian', 'Comedian_URL', 'Comedian_Probability',
+                'Footballer', 'Footballer_URL', 'Footballer_Probability',
+                'Combined_Probability', 'Rounded_Probability'
+            ])
             empty_combinations_df.to_csv(combinations_output_file, index=False)
             print(f"\nEmpty combinations file created: {combinations_output_file}")
         
-        # Create DataFrames and save to CSV files (common logic)
-        comedians_subset_df = pd.DataFrame({'Name': sorted(unique_comedians)})
-        footballers_subset_df = pd.DataFrame({'Name': sorted(unique_footballers)})
+        # Save subset CSV files
+        unique_comedians_df.to_csv(comedians_output_file, index=False)
+        unique_footballers_df.to_csv(footballers_output_file, index=False)
         
-        comedians_subset_df.to_csv(comedians_output_file, index=False)
-        footballers_subset_df.to_csv(footballers_output_file, index=False)
-        
-        if len(unique_comedians) > 0:
-            print(f"\nUnique comedians ({len(unique_comedians)}) saved to: {comedians_output_file}")
-            print(f"Unique footballers ({len(unique_footballers)}) saved to: {footballers_output_file}")
+        if len(unique_comedians_df) > 0:
+            print(f"\nUnique comedians ({len(unique_comedians_df)}) saved to: {comedians_output_file}")
+            print(f"Unique footballers ({len(unique_footballers_df)}) saved to: {footballers_output_file}")
         else:
             print(f"\nEmpty CSV files created: {comedians_output_file}, {footballers_output_file}")
         
