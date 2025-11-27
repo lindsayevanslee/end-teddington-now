@@ -5,14 +5,18 @@ resources:
     - data/footballers_probability.csv
 ---
 
-```{r}
-#| echo: false
-start_date <- as.Date("2025-07-23")
-today <- Sys.Date()
-days <- as.numeric(today - start_date)
+It's been **<span id="days-since"></span>** days since the Age of the Teddington Quiz began.
+
+```{=html}
+<script>
+const startDate = new Date('2025-07-23');
+const today = new Date();
+const diffTime = Math.abs(today - startDate);
+const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+document.getElementById('days-since').textContent = diffDays;
+</script>
 ```
 
-It's been **`r days`** days since the Age of the Teddington Quiz began.
 
 Use the tool below to compare the probabilities of different combinations of comedians and footballers that Max Rushden happened to see during his Teddington Days. Let's end his reign of terror. 
 
