@@ -258,7 +258,7 @@ class TeddingtonSightingModel:
             self.comedians['Probability'] = 0
         
         # Create comedian output
-        comedians_output_df = self.comedians[['Name', 'Probability']].copy()
+        comedians_output_df = self.comedians[['Name', 'URL', 'Probability']].copy()
         comedians_output_df = comedians_output_df.sort_values('Probability', ascending=False)
         comedians_output_df.to_csv(comedians_output, index=False)
         
@@ -275,7 +275,7 @@ class TeddingtonSightingModel:
             self.footballers['Probability'] = 0
         
         # Create footballer output
-        footballers_output_df = self.footballers[['Name', 'Probability']].copy()
+        footballers_output_df = self.footballers[['Name', 'URL', 'Probability']].copy()
         footballers_output_df = footballers_output_df.sort_values('Probability', ascending=False)
         footballers_output_df.to_csv(footballers_output, index=False)
         
