@@ -13,6 +13,10 @@ class TeddingtonSightingModel:
         if pd.notna(row['DeathYear']):
             return 0.0
         
+        # Female comedians have probability of 0
+        if pd.notna(row.get('Gender')) and str(row['Gender']).strip().lower() == 'female':
+            return 0.0
+        
         # Initialize base probability
         probability = 1.0
         
