@@ -116,26 +116,31 @@ def main():
         # Define output file paths
         comedians_output_file = 'data/comedians_subset_2025-11-25.csv'
         footballers_output_file = 'data/footballers_subset_2025-11-25.csv'
+        combinations_output_file = args.output if args.output else 'data/combinations_2025-11-25.csv'
         
         if len(matching_combinations) > 0:
             # Display first 10 results
             print("First 10 matching combinations:")
             print(matching_combinations.head(10).to_string(index=False))
             if len(matching_combinations) > 10:
-                print(f"\n... and {len(matching_combinations) - 10} more combinations (use --output to save all results)")
+                print(f"\n... and {len(matching_combinations) - 10} more combinations")
             
             # Extract unique comedians and footballers
             unique_comedians = matching_combinations['Comedian'].unique()
             unique_footballers = matching_combinations['Footballer'].unique()
             
-            # Save to CSV if output path specified
-            if args.output:
-                matching_combinations.to_csv(args.output, index=False)
-                print(f"\nAll {len(matching_combinations)} combinations saved to: {args.output}")
+            # Save all combinations to CSV
+            matching_combinations.to_csv(combinations_output_file, index=False)
+            print(f"\nAll {len(matching_combinations)} combinations saved to: {combinations_output_file}")
         else:
             print("No matching combinations found.")
             unique_comedians = []
             unique_footballers = []
+            
+            # Create empty combinations file
+            empty_combinations_df = pd.DataFrame(columns=['Comedian', 'Comedian_Probability', 'Footballer', 'Footballer_Probability', 'Combined_Probability', 'Rounded_Probability'])
+            empty_combinations_df.to_csv(combinations_output_file, index=False)
+            print(f"\nEmpty combinations file created: {combinations_output_file}")
         
         # Create DataFrames and save to CSV files (common logic)
         comedians_subset_df = pd.DataFrame({'Name': sorted(unique_comedians)})
