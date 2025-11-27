@@ -22,19 +22,19 @@ class TeddingtonSightingModel:
     def calculate_comedian_probability(self, row):
         """Calculate probability for a comedian being in Teddington"""
         
-        # Check if comedian is in subset (if subset is defined)
-        if self.comedians_subset is not None:
-            comedian_name = row['Name']
-            if comedian_name not in self.comedians_subset:
-                return 0.0
+        # # Check if comedian is in subset (if subset is defined)
+        # if self.comedians_subset is not None:
+        #     comedian_name = row['Name']
+        #     if comedian_name not in self.comedians_subset:
+        #         return 0.0
         
         # Dead people don't visit Teddington
         if pd.notna(row['DeathYear']):
             return 0.0
         
-        # Female comedians have probability of 0
-        if pd.notna(row.get('Gender')) and str(row['Gender']).strip().lower() == 'female':
-            return 0.0
+        # # Female comedians have probability of 0
+        # if pd.notna(row.get('Gender')) and str(row['Gender']).strip().lower() == 'female':
+        #     return 0.0
         
         # Initialize base probability
         probability = 1.0
@@ -101,11 +101,11 @@ class TeddingtonSightingModel:
     def calculate_footballer_probability(self, row):
         """Calculate probability for a footballer being in Teddington"""
         
-        # Check if footballer is in subset (if subset is defined)
-        if self.footballers_subset is not None:
-            footballer_name = row['Name']
-            if footballer_name not in self.footballers_subset:
-                return 0.0
+        # # Check if footballer is in subset (if subset is defined)
+        # if self.footballers_subset is not None:
+        #     footballer_name = row['Name']
+        #     if footballer_name not in self.footballers_subset:
+        #         return 0.0
         
         # 1. Active Status Filter
         # Priority: Recently retired > Long retired > Active
