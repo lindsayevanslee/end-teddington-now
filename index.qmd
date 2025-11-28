@@ -99,10 +99,30 @@ app_ui = ui.page_fluid(
         .table-container {
             scroll-behavior: auto;
         }
+        /* Style for CLEAR button */
+        .btn-primary {
+            background-color: #693010;
+            color: white;
+            border: 2px solid #693010;
+            border-radius: 5px;
+            padding: 10px 30px;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #8b4513;
+            border-color: #8b4513;
+        }
     """),
     ui.tags.div(
         ui.output_ui("result"),
         style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding: 15px; background-color: rgba(255, 248, 240, 0.8); border-radius: 5px; border: 2px solid #693010;"
+    ),
+    ui.tags.div(
+        ui.input_action_button("clear_selections", "CLEAR SELECTION", class_="btn-primary"),
+        style="text-align: center; margin-bottom: 10px;"
     ),
     ui.row(
         ui.column(6,
@@ -195,6 +215,10 @@ def server(input, output, session):
                         filtered_df = filtered_df.copy()
                         filtered_df["Probability"] = filtered_df["Probability"] / total_prob
         
+        # If a comedian is selected, only show that comedian (hide all others)
+        if selected_comedian_name:
+            filtered_df = filtered_df[filtered_df["Name"] == selected_comedian_name]
+        
         # Filter comedians based on search
         search_term = input.comedian_search().lower() if input.comedian_search() else ""
         if search_term:
@@ -266,25 +290,25 @@ def server(input, output, session):
         return ui.tags.div(container, script)
     
     @reactive.Effect
+    @reactive.event(input.clear_selections)
+    def _():
+        # Clear all selections
+        selected_comedian.set(None)
+        selected_footballer.set(None)
+        selection_order.set([])
+    
+    @reactive.Effect
     @reactive.event(input.comedian_click)
     def _():
         if input.comedian_click() is not None:
             clicked_name = input.comedian_click()
-            # Toggle: if already selected, deselect; otherwise select
-            if selected_comedian() == clicked_name:
-                selected_comedian.set(None)
-                # Remove from selection order
-                order = selection_order()
-                if 'comedian' in order:
-                    order = [x for x in order if x != 'comedian']
-                    selection_order.set(order)
-            else:
-                selected_comedian.set(clicked_name)
-                # Add to selection order if not already there
-                order = selection_order()
-                if 'comedian' not in order:
-                    order = order + ['comedian']
-                    selection_order.set(order)
+            # Select the clicked comedian (no toggle - just select)
+            selected_comedian.set(clicked_name)
+            # Add to selection order if not already there
+            order = selection_order()
+            if 'comedian' not in order:
+                order = order + ['comedian']
+                selection_order.set(order)
     
     @output
     @render.ui
@@ -333,6 +357,10 @@ def server(input, output, session):
                     if total_prob > 0:
                         filtered_df = filtered_df.copy()
                         filtered_df["Probability"] = filtered_df["Probability"] / total_prob
+        
+        # If a footballer is selected, only show that footballer (hide all others)
+        if selected_footballer_name:
+            filtered_df = filtered_df[filtered_df["Name"] == selected_footballer_name]
         
         # Filter footballers based on search
         search_term = input.footballer_search().lower() if input.footballer_search() else ""
@@ -409,21 +437,13 @@ def server(input, output, session):
     def _():
         if input.footballer_click() is not None:
             clicked_name = input.footballer_click()
-            # Toggle: if already selected, deselect; otherwise select
-            if selected_footballer() == clicked_name:
-                selected_footballer.set(None)
-                # Remove from selection order
-                order = selection_order()
-                if 'footballer' in order:
-                    order = [x for x in order if x != 'footballer']
-                    selection_order.set(order)
-            else:
-                selected_footballer.set(clicked_name)
-                # Add to selection order if not already there
-                order = selection_order()
-                if 'footballer' not in order:
-                    order = order + ['footballer']
-                    selection_order.set(order)
+            # Select the clicked footballer (no toggle - just select)
+            selected_footballer.set(clicked_name)
+            # Add to selection order if not already there
+            order = selection_order()
+            if 'footballer' not in order:
+                order = order + ['footballer']
+                selection_order.set(order)
     
     @output
     @render.ui
