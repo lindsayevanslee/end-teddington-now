@@ -121,6 +121,13 @@ For each footballer, the model uses a similar approach but with different factor
 
 The active status multiplier is applied to the weighted combination of the other four factors.
 
+### Clues for Valid Combinations
+
+Key pieces of information shared on the podcast are used to determine valid combinations:
+
+- Max confirmed that both the comedian and the footballer were men, so women are given an automatic probability of 0.
+- Max stated on the podcast dated 2025-11-25 that the correct answer was showing a probability of 0.0001% on this site. A snapshot of the data he was looking at was archived in `data/snapshots/wdydy_2025-11-25` and is used to determine the valid combinations.
+
 ### Normalization
 
 After calculating raw probability scores for all individuals, the model normalizes them so that all probabilities within each group (comedians and footballers) sum to 1.0 (or 100%). This means:
@@ -133,10 +140,11 @@ After calculating raw probability scores for all individuals, the model normaliz
 
 The final processed data files used by the website:
 
-- **`data/comedians_probability.csv`** - Contains comedian names and their calculated probability scores
-- **`data/footballers_probability.csv`** - Contains footballer names and their calculated probability scores
+- **`data/comedians_probability.csv`** - Contains comedian names, URLs (for unique identification), and their calculated probability scores
+- **`data/footballers_probability.csv`** - Contains footballer names, URLs (for unique identification), and their calculated probability scores
+- **`data/combinations_2025-11-25.csv`** - Contains all valid comedian-footballer pairings that have a combined probability matching a specific threshold (0.000001). This file is used to filter and renormalize conditional probabilities in the interactive website.
 
-These files are used directly by the Quarto website to populate the interactive tables.
+These files are used directly by the Quarto website to populate the interactive tables and determine valid pairings.
 
 
 ## The Website
@@ -150,6 +158,30 @@ The website is built using Quarto. The main file is `index.qmd`, which contains:
   - A calculation showing the combined probability of that pairing
 
 The website uses the processed probability CSV files (`comedians_probability.csv` and `footballers_probability.csv`) to populate the tables. When a user selects a pairing, the website multiplies the two probabilities together to show the combined likelihood.
+
+### Interactive Features
+
+The website includes several interactive features:
+
+1. **Search Functionality**: Both tables have search boxes that filter results in real-time as you type.
+
+2. **Selection Behavior**: 
+   - When you select a comedian or footballer, all other options in that list disappear, showing only the selected item
+   - A "CLEAR SELECTION" button allows you to reset your choices and see all options again
+
+3. **Conditional Probability Renormalization**:
+   - When you select one item (e.g., a footballer), the other list (comedians) automatically filters to show only valid pairings from the combinations file `data/combinations_2025-11-25.csv`
+   - The probabilities in the filtered list are renormalized to sum to 100%, representing conditional probabilities (e.g. the probability of the comedian being correct given the selected footballer is correct)
+   - The first-selected item always displays its original probability, while the second list shows renormalized conditional probabilities
+   - The final calculation uses: `original_probability_of_first_selected × renormalized_probability_of_second_selected`
+
+4. **Unique Row Identification**: 
+   - The system uses DataFrame indices to uniquely identify each row, ensuring that even if multiple people share the same name (e.g., multiple "Wayne Brown" entries), only the specific row you click is selected and used in calculations
+
+5. **Valid Combinations**: 
+   - The website uses `data/combinations_2025-11-25.csv` to determine which comedian-footballer pairings are valid (this is combinations of comedian/footballer showing a probability of 0.0001% in the snapshot of the data Max was looking at on the podcast dated 2025-11-25)
+   - Only pairings that exist in this file are considered when filtering and renormalizing probabilities
+   - This ensures that the conditional probabilities reflect only realistic pairings based on the underlying data
 
 ## Running the Project
 
