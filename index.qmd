@@ -156,8 +156,9 @@ app_ui = ui.page_fluid(
 )
 
 def server(input, output, session):
-    selected_comedian = reactive.Value(None)
-    selected_footballer = reactive.Value(None)
+    # Store selected indices (from original dataframes) to uniquely identify rows
+    selected_comedian_idx = reactive.Value(None)  # Index from comedians_df
+    selected_footballer_idx = reactive.Value(None)  # Index from footballers_df
     # Track which was selected first to determine calculation order
     selection_order = reactive.Value([])  # List to track order: ['comedian'] or ['footballer'] or ['comedian', 'footballer'] etc.
     
@@ -174,8 +175,14 @@ def server(input, output, session):
         filtered_df = comedians_df.copy()
         
         # Filter based on selected footballer (if any)
-        selected_footballer_name = selected_footballer()
-        selected_comedian_name = selected_comedian()
+        selected_footballer_idx_val = selected_footballer_idx()
+        selected_comedian_idx_val = selected_comedian_idx()
+        selected_footballer_name = None
+        selected_comedian_name = None
+        if selected_footballer_idx_val is not None and selected_footballer_idx_val in footballers_df.index:
+            selected_footballer_name = footballers_df.loc[selected_footballer_idx_val, "Name"]
+        if selected_comedian_idx_val is not None and selected_comedian_idx_val in comedians_df.index:
+            selected_comedian_name = comedians_df.loc[selected_comedian_idx_val, "Name"]
         order = selection_order()
         first_selected = order[0] if len(order) > 0 else None
         
@@ -191,6 +198,7 @@ def server(input, output, session):
                 should_renormalize_comedians = True
             # If comedian was selected first, don't renormalize (show original)
         
+        # Filter by valid combinations and renormalize FIRST (before filtering to show only selected)
         if selected_footballer_name:
             # Find all footballers with this name (could be multiple if different URLs)
             footballer_rows = footballers_df[footballers_df["Name"] == selected_footballer_name]
@@ -215,9 +223,16 @@ def server(input, output, session):
                         filtered_df = filtered_df.copy()
                         filtered_df["Probability"] = filtered_df["Probability"] / total_prob
         
-        # If a comedian is selected, only show that comedian (hide all others)
-        if selected_comedian_name:
-            filtered_df = filtered_df[filtered_df["Name"] == selected_comedian_name]
+        # If a comedian is selected, only show that specific comedian (by index)
+        # This happens AFTER filtering/renormalization, so the renormalized probability is preserved
+        if selected_comedian_idx_val is not None:
+            # Make sure the selected comedian is in the filtered dataframe
+            if selected_comedian_idx_val in filtered_df.index:
+                # Filter to show only the row with the selected index
+                filtered_df = filtered_df[filtered_df.index == selected_comedian_idx_val]
+            else:
+                # If selected comedian is not in filtered_df (no valid combination), show it anyway with original probability
+                filtered_df = comedians_df[comedians_df.index == selected_comedian_idx_val]
         
         # Filter comedians based on search
         search_term = input.comedian_search().lower() if input.comedian_search() else ""
@@ -235,7 +250,8 @@ def server(input, output, session):
         for idx, row in filtered_df.iterrows():
             name = row["Name"]
             prob = row["Probability"]
-            is_selected = selected_comedian() == name
+            # Check if this specific row (by index) is selected
+            is_selected = selected_comedian_idx_val == idx
             
             row_style = "cursor: pointer; font-family: 'Instrument Serif', serif; "
             if is_selected:
@@ -243,12 +259,12 @@ def server(input, output, session):
             else:
                 row_style += "background-color: rgba(255, 248, 240, 0.6);"
             
-            name_escaped = name.replace("'", "\\'")
+            # Pass the index as the identifier (no string escaping needed for numbers)
             rows.append(
                 ui.tags.tr(
                     ui.tags.td(name, style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
                     ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
-                    **{"onclick": f"(function(e){{ var cont = document.getElementById('comedians-table-container'); if(cont){{ window._comediansScrollPos = cont.scrollTop; }} Shiny.setInputValue('comedian_click', '{name_escaped}', {{priority: 'event'}}); }})(event);"},
+                    **{"onclick": f"(function(e){{ var cont = document.getElementById('comedians-table-container'); if(cont){{ window._comediansScrollPos = cont.scrollTop; }} Shiny.setInputValue('comedian_click', {idx}, {{priority: 'event'}}); }})(event);"},
                     style=row_style
                 )
             )
@@ -293,17 +309,23 @@ def server(input, output, session):
     @reactive.event(input.clear_selections)
     def _():
         # Clear all selections
-        selected_comedian.set(None)
-        selected_footballer.set(None)
+        selected_comedian_idx.set(None)
+        selected_footballer_idx.set(None)
         selection_order.set([])
     
     @reactive.Effect
     @reactive.event(input.comedian_click)
     def _():
         if input.comedian_click() is not None:
-            clicked_name = input.comedian_click()
-            # Select the clicked comedian (no toggle - just select)
-            selected_comedian.set(clicked_name)
+            clicked_idx = input.comedian_click()
+            # Convert to int if it's a string
+            if isinstance(clicked_idx, str):
+                try:
+                    clicked_idx = int(clicked_idx)
+                except ValueError:
+                    return
+            # Select the clicked comedian by index
+            selected_comedian_idx.set(clicked_idx)
             # Add to selection order if not already there
             order = selection_order()
             if 'comedian' not in order:
@@ -317,8 +339,14 @@ def server(input, output, session):
         filtered_df = footballers_df.copy()
         
         # Filter based on selected comedian (if any)
-        selected_comedian_name = selected_comedian()
-        selected_footballer_name = selected_footballer()
+        selected_comedian_idx_val = selected_comedian_idx()
+        selected_footballer_idx_val = selected_footballer_idx()
+        selected_comedian_name = None
+        selected_footballer_name = None
+        if selected_comedian_idx_val is not None and selected_comedian_idx_val in comedians_df.index:
+            selected_comedian_name = comedians_df.loc[selected_comedian_idx_val, "Name"]
+        if selected_footballer_idx_val is not None and selected_footballer_idx_val in footballers_df.index:
+            selected_footballer_name = footballers_df.loc[selected_footballer_idx_val, "Name"]
         order = selection_order()
         first_selected = order[0] if len(order) > 0 else None
         
@@ -334,6 +362,7 @@ def server(input, output, session):
                 should_renormalize_footballers = True
             # If footballer was selected first, don't renormalize (show original)
         
+        # Filter by valid combinations and renormalize FIRST (before filtering to show only selected)
         if selected_comedian_name:
             # Find all comedians with this name (could be multiple if different URLs)
             comedian_rows = comedians_df[comedians_df["Name"] == selected_comedian_name]
@@ -358,9 +387,16 @@ def server(input, output, session):
                         filtered_df = filtered_df.copy()
                         filtered_df["Probability"] = filtered_df["Probability"] / total_prob
         
-        # If a footballer is selected, only show that footballer (hide all others)
-        if selected_footballer_name:
-            filtered_df = filtered_df[filtered_df["Name"] == selected_footballer_name]
+        # If a footballer is selected, only show that specific footballer (by index)
+        # This happens AFTER filtering/renormalization, so the renormalized probability is preserved
+        if selected_footballer_idx_val is not None:
+            # Make sure the selected footballer is in the filtered dataframe
+            if selected_footballer_idx_val in filtered_df.index:
+                # Filter to show only the row with the selected index
+                filtered_df = filtered_df[filtered_df.index == selected_footballer_idx_val]
+            else:
+                # If selected footballer is not in filtered_df (no valid combination), show it anyway with original probability
+                filtered_df = footballers_df[footballers_df.index == selected_footballer_idx_val]
         
         # Filter footballers based on search
         search_term = input.footballer_search().lower() if input.footballer_search() else ""
@@ -378,7 +414,8 @@ def server(input, output, session):
         for idx, row in filtered_df.iterrows():
             name = row["Name"]
             prob = row["Probability"]
-            is_selected = selected_footballer() == name
+            # Check if this specific row (by index) is selected
+            is_selected = selected_footballer_idx_val == idx
             
             row_style = "cursor: pointer; font-family: 'Instrument Serif', serif; "
             if is_selected:
@@ -386,12 +423,12 @@ def server(input, output, session):
             else:
                 row_style += "background-color: rgba(255, 248, 240, 0.6);"
             
-            name_escaped = name.replace("'", "\\'")
+            # Pass the index as the identifier (no string escaping needed for numbers)
             rows.append(
                 ui.tags.tr(
                     ui.tags.td(name, style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
                     ui.tags.td(f"{prob*100:.2f}%", style="padding: 10px; border: 1px solid #693010; font-family: 'Instrument Serif', serif;"),
-                    **{"onclick": f"(function(e){{ var cont = document.getElementById('footballers-table-container'); if(cont){{ window._footballersScrollPos = cont.scrollTop; }} Shiny.setInputValue('footballer_click', '{name_escaped}', {{priority: 'event'}}); }})(event);"},
+                    **{"onclick": f"(function(e){{ var cont = document.getElementById('footballers-table-container'); if(cont){{ window._footballersScrollPos = cont.scrollTop; }} Shiny.setInputValue('footballer_click', {idx}, {{priority: 'event'}}); }})(event);"},
                     style=row_style
                 )
             )
@@ -436,9 +473,15 @@ def server(input, output, session):
     @reactive.event(input.footballer_click)
     def _():
         if input.footballer_click() is not None:
-            clicked_name = input.footballer_click()
-            # Select the clicked footballer (no toggle - just select)
-            selected_footballer.set(clicked_name)
+            clicked_idx = input.footballer_click()
+            # Convert to int if it's a string
+            if isinstance(clicked_idx, str):
+                try:
+                    clicked_idx = int(clicked_idx)
+                except ValueError:
+                    return
+            # Select the clicked footballer by index
+            selected_footballer_idx.set(clicked_idx)
             # Add to selection order if not already there
             order = selection_order()
             if 'footballer' not in order:
@@ -448,63 +491,82 @@ def server(input, output, session):
     @output
     @render.ui
     def result():
-        comedian = selected_comedian()
-        footballer = selected_footballer()
+        comedian_idx = selected_comedian_idx()
+        footballer_idx = selected_footballer_idx()
         
-        if comedian and footballer:
-            # Get original probabilities
-            comedian_rows = comedians_df[comedians_df["Name"] == comedian]
-            footballer_rows = footballers_df[footballers_df["Name"] == footballer]
-            
-            if len(comedian_rows) > 0 and len(footballer_rows) > 0:
-                comedian_original = comedian_rows.iloc[0]["Probability"]
-                footballer_original = footballer_rows.iloc[0]["Probability"]
-                comedian_key = (comedian_rows.iloc[0]["Name"], comedian_rows.iloc[0]["URL"])
-                footballer_key = (footballer_rows.iloc[0]["Name"], footballer_rows.iloc[0]["URL"])
+        if comedian_idx is not None and footballer_idx is not None:
+            # Get the specific rows by index from original dataframes
+            if comedian_idx in comedians_df.index and footballer_idx in footballers_df.index:
+                comedian_row_original = comedians_df.loc[comedian_idx]
+                footballer_row_original = footballers_df.loc[footballer_idx]
+                comedian_name = comedian_row_original["Name"]
+                footballer_name = footballer_row_original["Name"]
+                comedian_original = comedian_row_original["Probability"]
+                footballer_original = footballer_row_original["Probability"]
+                comedian_key = (comedian_row_original["Name"], comedian_row_original["URL"])
+                footballer_key = (footballer_row_original["Name"], footballer_row_original["URL"])
                 
-                # Determine which probabilities to use based on selection order
-                # Rule: Use original probability for the FIRST selected item, renormalized for the other
+                # Use the same logic as the display functions to get the displayed probabilities
+                # This ensures the calculation matches what's shown in the tables
                 comedian_prob = comedian_original
                 footballer_prob = footballer_original
                 
                 order = selection_order()
                 first_selected = order[0] if len(order) > 0 else None
                 
-                # Determine which was selected first by checking selection order
-                # If order is empty or unclear, default to comedian-first logic
-                if first_selected == 'comedian' or (first_selected is None and comedian):
-                    # Comedian was selected first (or only comedian): use comedian original × footballer renormalized
-                    if comedian_key in comedian_to_footballers:
-                        valid_footballer_keys = comedian_to_footballers[comedian_key]
-                        if footballer_key in valid_footballer_keys:
-                            valid_footballers = footballers_df[footballers_df.apply(
-                                lambda row: (row["Name"], row["URL"]) in valid_footballer_keys, axis=1
-                            )]
-                            total_footballer_prob = valid_footballers["Probability"].sum()
-                            if total_footballer_prob > 0:
-                                footballer_prob = footballer_original / total_footballer_prob
+                # Get names for filtering logic
+                selected_footballer_name = footballer_name if footballer_idx is not None else None
+                selected_comedian_name = comedian_name if comedian_idx is not None else None
+                
+                # Determine which probabilities to use based on selection order
+                # Rule: Use original probability for the FIRST selected item, renormalized for the other
+                if first_selected == 'comedian' or (first_selected is None and comedian_idx is not None):
+                    # Comedian was selected first: use comedian original × footballer renormalized
+                    if selected_comedian_name:
+                        comedian_rows = comedians_df[comedians_df["Name"] == selected_comedian_name]
+                        if len(comedian_rows) > 0:
+                            valid_footballer_keys = set()
+                            for _, comedian_row in comedian_rows.iterrows():
+                                c_key = (comedian_row["Name"], comedian_row["URL"])
+                                valid_footballer_keys.update(comedian_to_footballers.get(c_key, set()))
+                            
+                            if footballer_key in valid_footballer_keys:
+                                valid_footballers = footballers_df[footballers_df.apply(
+                                    lambda row: (row["Name"], row["URL"]) in valid_footballer_keys, axis=1
+                                )]
+                                total_footballer_prob = valid_footballers["Probability"].sum()
+                                if total_footballer_prob > 0:
+                                    footballer_prob = footballer_original / total_footballer_prob
                 
                 elif first_selected == 'footballer':
                     # Footballer was selected first: use comedian renormalized × footballer original
-                    if footballer_key in footballer_to_comedians:
-                        valid_comedian_keys = footballer_to_comedians[footballer_key]
-                        if comedian_key in valid_comedian_keys:
-                            valid_comedians = comedians_df[comedians_df.apply(
-                                lambda row: (row["Name"], row["URL"]) in valid_comedian_keys, axis=1
-                            )]
-                            total_comedian_prob = valid_comedians["Probability"].sum()
-                            if total_comedian_prob > 0:
-                                comedian_prob = comedian_original / total_comedian_prob
+                    if selected_footballer_name:
+                        footballer_rows = footballers_df[footballers_df["Name"] == selected_footballer_name]
+                        if len(footballer_rows) > 0:
+                            valid_comedian_keys = set()
+                            for _, footballer_row in footballer_rows.iterrows():
+                                f_key = (footballer_row["Name"], footballer_row["URL"])
+                                valid_comedian_keys.update(footballer_to_comedians.get(f_key, set()))
+                            
+                            if comedian_key in valid_comedian_keys:
+                                valid_comedians = comedians_df[comedians_df.apply(
+                                    lambda row: (row["Name"], row["URL"]) in valid_comedian_keys, axis=1
+                                )]
+                                total_comedian_prob = valid_comedians["Probability"].sum()
+                                if total_comedian_prob > 0:
+                                    comedian_prob = comedian_original / total_comedian_prob
                 
                 product = comedian_prob * footballer_prob
                 return ui.tags.div(
                     f"Probability of success: {comedian_prob*100:.2f}% × {footballer_prob*100:.2f}% = ",
                     ui.tags.span(f"{product*100:.4f}%", style="color: #a60029; font-weight: bold;")
                 )
-        elif comedian:
-            return ui.tags.div(f"Selected comedian: {comedian}. Select a footballer.")
-        elif footballer:
-            return ui.tags.div(f"Selected footballer: {footballer}. Select a comedian.")
+        elif comedian_idx is not None:
+            comedian_name = comedians_df.loc[comedian_idx, "Name"] if comedian_idx in comedians_df.index else "Unknown"
+            return ui.tags.div(f"Selected comedian: {comedian_name}. Select a footballer.")
+        elif footballer_idx is not None:
+            footballer_name = footballers_df.loc[footballer_idx, "Name"] if footballer_idx in footballers_df.index else "Unknown"
+            return ui.tags.div(f"Selected footballer: {footballer_name}. Select a comedian.")
         else:
             return ui.tags.div("Select one comedian and one footballer.")
 
