@@ -1,25 +1,31 @@
 ---
-title: "END TEDDINGTON NOW!"
+title: "TEDDINGTON HAS FALLEN!"
 resources:
     - data/comedians_probability.csv
     - data/footballers_probability.csv
     - data/combinations_2025-11-25.csv
 ---
 
-It's been **<span id="days-since"></span>** days since the Age of the Teddington Quiz began.
+# We did it, y'all.
+
+Our collective nightmare is [over](https://podcasts.apple.com/us/podcast/wdwdy-50-the-dream-crusher-is-here/id1765600990?i=1000740588375). Thank you all for doing your part to bring peace to our world.
+
+<hr style="border: none; border-top: 3px solid #693010; margin: 30px 0;">
+
+We lived **<span id="days-since"></span>** days under the Age of the Teddington Quiz.
 
 ```{=html}
 <script>
 const startDate = new Date('2025-07-23');
 const today = new Date();
-const diffTime = Math.abs(today - startDate);
+const endDate = new Date('2025-12-10')
+const diffTime = Math.abs(endDate - startDate);
 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 document.getElementById('days-since').textContent = diffDays;
 </script>
 ```
 
-
-Use the tool below to compare the probabilities of different combinations of comedians and footballers that Max Rushden happened to see during his Teddington Days. Let's end his reign of terror. 
+Use the tool below to compare the probabilities of different combinations of comedians and footballers that Max Rushden happened to see during his Teddington Days. 
 
 ```{shinylive-python}
 #| standalone: true
@@ -574,7 +580,7 @@ app = App(app_ui, server)
 ```
 
 
-For more details on methodology and the full code, see the [GitHub repo](https://github.com/lindsayevanslee/end-teddington-now). Stats will change as the data and model are refined.
+For more details on methodology and the full code, see the [GitHub repo](https://github.com/lindsayevanslee/end-teddington-now).
 
 #initforlife
 #everythingisshowbiz

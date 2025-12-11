@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>END TEDDINGTON NOW! – End Teddington Now!</title>
+<title>TEDDINGTON HAS FALLEN! – End Teddington Now!</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -89,7 +89,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">END TEDDINGTON NOW!</h1>
+<h1 class="title">TEDDINGTON HAS FALLEN!</h1>
 </div>
 
 
@@ -106,15 +106,20 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>It’s been <strong><span id="days-since"></span></strong> days since the Age of the Teddington Quiz began.</p>
+<section id="we-did-it-yall." class="level1">
+<h1>We did it, y’all.</h1>
+<p>Our collective nightmare is <a href="https://podcasts.apple.com/us/podcast/wdwdy-50-the-dream-crusher-is-here/id1765600990?i=1000740588375">over</a>. Thank you all for doing your part to bring peace to our world.</p>
+<hr style="border: none; border-top: 3px solid #693010; margin: 30px 0;">
+<p>We lived <strong><span id="days-since"></span></strong> days under the Age of the Teddington Quiz.</p>
 <script>
 const startDate = new Date('2025-07-23');
 const today = new Date();
-const diffTime = Math.abs(today - startDate);
+const endDate = new Date('2025-12-10')
+const diffTime = Math.abs(endDate - startDate);
 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 document.getElementById('days-since').textContent = diffDays;
 </script>
-<p>Use the tool below to compare the probabilities of different combinations of comedians and footballers that Max Rushden happened to see during his Teddington Days. Let’s end his reign of terror.</p>
+<p>Use the tool below to compare the probabilities of different combinations of comedians and footballers that Max Rushden happened to see during his Teddington Days.</p>
 <pre class="shinylive-python" data-engine="python"><code>#| '!! shinylive warning !!': |
 #|   shinylive does not work in self-contained HTML documents.
 #|   Please set `embed-resources: false` in your metadata.
@@ -667,8 +672,9 @@ def server(input, output, session):
             return ui.tags.div("Select one comedian and one footballer.")
 
 app = App(app_ui, server)</code></pre>
-<p>For more details on methodology and the full code, see the <a href="https://github.com/lindsayevanslee/end-teddington-now">GitHub repo</a>. Stats will change as the data and model are refined.</p>
+<p>For more details on methodology and the full code, see the <a href="https://github.com/lindsayevanslee/end-teddington-now">GitHub repo</a>.</p>
 <p>#initforlife #everythingisshowbiz</p>
+</section>
 <section id="key-updates" class="level1">
 <h1>Key updates</h1>
 <section id="section" class="level2">
